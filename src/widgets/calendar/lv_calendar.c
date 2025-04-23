@@ -6,7 +6,9 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_calendar.h"
+#include "lv_calendar_private.h"
+#include "../../draw/lv_draw_private.h"
+#include "../../core/lv_obj_class_private.h"
 #include "../../../lvgl.h"
 #if LV_USE_CALENDAR
 
@@ -53,7 +55,7 @@ const lv_obj_class_t lv_calendar_class = {
     .group_def = LV_OBJ_CLASS_GROUP_DEF_TRUE,
     .instance_size = sizeof(lv_calendar_t),
     .base_class = &lv_obj_class,
-    .name = "calendar",
+    .name = "lv_calendar",
 };
 
 static const char * day_names_def[7] = LV_CALENDAR_DEFAULT_DAY_NAMES;
@@ -115,7 +117,7 @@ void lv_calendar_set_highlighted_dates(lv_obj_t * obj, lv_calendar_date_t highli
     highlight_update(obj);
 }
 
-void lv_calendar_set_showed_date(lv_obj_t * obj, uint32_t year, uint32_t month)
+void lv_calendar_set_month_shown(lv_obj_t * obj, uint32_t year, uint32_t month)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_calendar_t * calendar = (lv_calendar_t *)obj;
@@ -330,7 +332,7 @@ static void lv_calendar_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
 
     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 
-    lv_calendar_set_showed_date(obj, calendar->showed_date.year, calendar->showed_date.month);
+    lv_calendar_set_month_shown(obj, calendar->showed_date.year, calendar->showed_date.month);
     lv_calendar_set_today_date(obj, calendar->today.year, calendar->today.month, calendar->today.day);
 }
 
@@ -386,7 +388,7 @@ static uint8_t get_month_length(int32_t year, int32_t month)
 {
     month--;
     if(month < 0) {
-        year--;             /*Already in the previous year (won't be less then -12 to skip a whole year)*/
+        year--;             /*Already in the previous year (won't be less than -12 to skip a whole year)*/
         month = 12 + month; /*`month` is negative, the result will be < 12*/
     }
     if(month >= 12) {

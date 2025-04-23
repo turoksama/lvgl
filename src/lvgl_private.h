@@ -1,10 +1,10 @@
 /**
  * @file lvgl_private.h
- *
+ * This file exists only to be compatible with Arduino's library structure
  */
 
-#ifndef LVGL_PRIVATE_H
-#define LVGL_PRIVATE_H
+#ifndef LVGL_PRIVATE_SRC_H
+#define LVGL_PRIVATE_SRC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,13 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "display/lv_display_private.h"
-#include "indev/lv_indev_private.h"
-#include "misc/lv_text_private.h"
-#include "libs/freetype/lv_freetype_private.h"
-#include "misc/cache/lv_cache_entry_private.h"
-#include "misc/cache/lv_cache_private.h"
-#include "drivers/windows/lv_windows_input_private.h"
+#include "../lvgl_private.h"
 
 /*********************
  *      DEFINES
@@ -41,4 +35,4 @@ extern "C" {
 } /*extern "C"*/
 #endif
 
-#endif /*LVGL_PRIVATE_H*/
+#endif /* LVGL_PRIVATE_SRC_H */

@@ -4,6 +4,10 @@
 #include "../../core/lv_global.h"
 #include "LittleFS.h"
 
+#if !LV_FS_IS_VALID_LETTER(LV_FS_ARDUINO_ESP_LITTLEFS_LETTER)
+    #error "Invalid drive letter"
+#endif
+
 typedef struct ArduinoEspLittleFile {
     File file;
 } ArduinoEspLittleFile;
@@ -73,7 +77,10 @@ static void * fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode)
     else if(mode == (LV_FS_MODE_WR | LV_FS_MODE_RD))
         flags = FILE_WRITE;
 
-    File file = LittleFS.open(path, flags);
+    char buf[LV_FS_MAX_PATH_LEN];
+    lv_snprintf(buf, sizeof(buf), LV_FS_ARDUINO_ESP_LITTLEFS_PATH "%s", path);
+
+    File file = LittleFS.open(buf, flags);
     if(!file) {
         return NULL;
     }
@@ -178,4 +185,10 @@ static lv_fs_res_t fs_tell(lv_fs_drv_t * drv, void * file_p, uint32_t * pos_p)
     return (int32_t)(*pos_p) < 0 ? LV_FS_RES_UNKNOWN : LV_FS_RES_OK;
 }
 
+#else /*LV_USE_FS_ARDUINO_ESP_LITTLEFS == 0*/
+
+#if defined(LV_FS_ARDUINO_ESP_LITTLEFS_LETTER) && LV_FS_ARDUINO_ESP_LITTLEFS_LETTER != '\0'
+    #warning "LV_USE_FS_ARDUINO_ESP_LITTLEFS is not enabled but LV_FS_ARDUINO_ESP_LITTLEFS_LETTER is set"
 #endif
+
+#endif /*LV_USE_FS_ARDUINO_ESP_LITTLEFS*/

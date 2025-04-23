@@ -6,7 +6,9 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_textarea.h"
+#include "lv_textarea_private.h"
+#include "../label/lv_label_private.h"
+#include "../../core/lv_obj_class_private.h"
 #if LV_USE_TEXTAREA != 0
 
 #include "../../core/lv_group.h"
@@ -14,7 +16,7 @@
 #include "../../indev/lv_indev.h"
 #include "../../draw/lv_draw.h"
 #include "../../misc/lv_assert.h"
-#include "../../misc/lv_anim.h"
+#include "../../misc/lv_anim_private.h"
 #include "../../misc/lv_text_private.h"
 #include "../../misc/lv_math.h"
 #include "../../stdlib/lv_string.h"
@@ -65,6 +67,86 @@ static inline bool is_valid_but_non_printable_char(const uint32_t letter);
 /**********************
  *  STATIC VARIABLES
  **********************/
+#if LV_USE_OBJ_PROPERTY
+static const lv_property_ops_t properties[] = {
+    {
+        .id = LV_PROPERTY_TEXTAREA_TEXT,
+        .setter = lv_textarea_set_text,
+        .getter = lv_textarea_get_text,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_PLACEHOLDER_TEXT,
+        .setter = lv_textarea_set_placeholder_text,
+        .getter = lv_textarea_get_placeholder_text,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_CURSOR_POS,
+        .setter = lv_textarea_set_cursor_pos,
+        .getter = lv_textarea_get_cursor_pos,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_CURSOR_CLICK_POS,
+        .setter = lv_textarea_set_cursor_click_pos,
+        .getter = lv_textarea_get_cursor_click_pos,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_PASSWORD_MODE,
+        .setter = lv_textarea_set_password_mode,
+        .getter = lv_textarea_get_password_mode,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_PASSWORD_BULLET,
+        .setter = lv_textarea_set_password_bullet,
+        .getter = lv_textarea_get_password_bullet,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_ONE_LINE,
+        .setter = lv_textarea_set_one_line,
+        .getter = lv_textarea_get_one_line,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_ACCEPTED_CHARS,
+        .setter = lv_textarea_set_accepted_chars,
+        .getter = lv_textarea_get_accepted_chars,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_MAX_LENGTH,
+        .setter = lv_textarea_set_max_length,
+        .getter = lv_textarea_get_max_length,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_INSERT_REPLACE,
+        .setter = lv_textarea_set_insert_replace,
+        .getter = NULL,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_TEXT_SELECTION,
+        .setter = lv_textarea_set_text_selection,
+        .getter = lv_textarea_get_text_selection,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_PASSWORD_SHOW_TIME,
+        .setter = lv_textarea_set_password_show_time,
+        .getter = lv_textarea_get_password_show_time,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_LABEL,
+        .setter = NULL,
+        .getter = lv_textarea_get_label,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_TEXT_IS_SELECTED,
+        .setter = NULL,
+        .getter = lv_textarea_text_is_selected,
+    },
+    {
+        .id = LV_PROPERTY_TEXTAREA_CURRENT_CHAR,
+        .setter = NULL,
+        .getter = lv_textarea_get_current_char,
+    },
+};
+#endif
+
 const lv_obj_class_t lv_textarea_class = {
     .constructor_cb = lv_textarea_constructor,
     .destructor_cb = lv_textarea_destructor,
@@ -72,9 +154,22 @@ const lv_obj_class_t lv_textarea_class = {
     .group_def = LV_OBJ_CLASS_GROUP_DEF_TRUE,
     .width_def = LV_DPI_DEF * 2,
     .height_def = LV_DPI_DEF,
+    .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .instance_size = sizeof(lv_textarea_t),
     .base_class = &lv_obj_class,
-    .name = "textarea",
+    .name = "lv_textarea",
+#if LV_USE_OBJ_PROPERTY
+    .prop_index_start = LV_PROPERTY_TEXTAREA_START,
+    .prop_index_end = LV_PROPERTY_TEXTAREA_END,
+    .properties = properties,
+    .properties_count = sizeof(properties) / sizeof(properties[0]),
+
+#if LV_USE_OBJ_PROPERTY_NAME
+    .property_names = lv_textarea_property_names,
+    .names_count = sizeof(lv_textarea_property_names) / sizeof(lv_property_name_t),
+#endif
+
+#endif
 };
 
 static const char * ta_insert_replace;
@@ -853,7 +948,8 @@ static void lv_textarea_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
     ta->label = lv_label_create(obj);
     lv_obj_set_width(ta->label, lv_pct(100));
     lv_label_set_text(ta->label, "");
-    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_STYLE_CHANGED, NULL);
+    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_SIZE_CHANGED, NULL);
     lv_obj_add_flag(obj, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_WITH_ARROW);
 
@@ -1065,7 +1161,7 @@ static void start_cursor_blink(lv_obj_t * obj)
         lv_anim_set_var(&a, ta);
         lv_anim_set_exec_cb(&a, cursor_blink_anim_cb);
         lv_anim_set_duration(&a, blink_time);
-        lv_anim_set_playback_duration(&a, blink_time);
+        lv_anim_set_reverse_duration(&a, blink_time);
         lv_anim_set_values(&a, 1, 0);
         lv_anim_set_path_cb(&a, lv_anim_path_step);
         lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
@@ -1303,16 +1399,22 @@ static void draw_placeholder(lv_event_t * e)
     if(txt[0] == '\0' && ta->placeholder_txt && ta->placeholder_txt[0] != 0) {
         lv_draw_label_dsc_t ph_dsc;
         lv_draw_label_dsc_init(&ph_dsc);
+        ph_dsc.base.layer = layer;
         lv_obj_init_draw_label_dsc(obj, LV_PART_TEXTAREA_PLACEHOLDER, &ph_dsc);
 
         if(ta->one_line) ph_dsc.flag |= LV_TEXT_FLAG_EXPAND;
 
         int32_t left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
+        int32_t right = lv_obj_get_style_pad_right(obj, LV_PART_MAIN);
         int32_t top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
+        int32_t bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_MAIN);
         int32_t border_width = lv_obj_get_style_border_width(obj, LV_PART_MAIN);
         lv_area_t ph_coords;
         lv_area_copy(&ph_coords, &obj->coords);
-        lv_area_move(&ph_coords, left + border_width, top + border_width);
+        ph_coords.x1 += left + border_width;
+        ph_coords.x2 -= right + border_width;
+        ph_coords.y1 += top + border_width;
+        ph_coords.y2 -= bottom + border_width;
         ph_dsc.text = ta->placeholder_txt;
         lv_draw_label(layer, &ph_dsc, &ph_coords);
     }
@@ -1329,6 +1431,7 @@ static void draw_cursor(lv_event_t * e)
 
     lv_draw_rect_dsc_t cur_dsc;
     lv_draw_rect_dsc_init(&cur_dsc);
+    cur_dsc.base.layer = layer;
     lv_obj_init_draw_rect_dsc(obj, LV_PART_CURSOR, &cur_dsc);
 
     /*Draw he cursor according to the type*/
@@ -1357,6 +1460,7 @@ static void draw_cursor(lv_event_t * e)
     lv_color_t label_color = lv_obj_get_style_text_color(ta->label, 0);
     lv_draw_label_dsc_t cur_label_dsc;
     lv_draw_label_dsc_init(&cur_label_dsc);
+    cur_label_dsc.base.layer = layer;
     lv_obj_init_draw_label_dsc(obj, LV_PART_CURSOR, &cur_label_dsc);
     if(cur_dsc.bg_opa > LV_OPA_MIN || !lv_color_eq(cur_label_dsc.color, label_color)) {
         cur_label_dsc.text = letter_buf;

@@ -57,6 +57,9 @@ void lv_example_canvas_5(void);
 void lv_example_canvas_6(void);
 void lv_example_canvas_7(void);
 void lv_example_canvas_8(void);
+void lv_example_canvas_9(void);
+void lv_example_canvas_10(void);
+void lv_example_canvas_11(void);
 
 void lv_example_chart_1(void);
 void lv_example_chart_2(void);
@@ -78,6 +81,7 @@ void lv_example_image_1(void);
 void lv_example_image_2(void);
 void lv_example_image_3(void);
 void lv_example_image_4(void);
+void lv_example_image_5(void);
 
 void lv_example_imagebutton_1(void);
 
@@ -97,6 +101,9 @@ void lv_example_line_1(void);
 void lv_example_list_1(void);
 void lv_example_list_2(void);
 
+void lv_example_lottie_1(void);
+void lv_example_lottie_2(void);
+
 void lv_example_menu_1(void);
 void lv_example_menu_2(void);
 void lv_example_menu_3(void);
@@ -104,13 +111,15 @@ void lv_example_menu_4(void);
 void lv_example_menu_5(void);
 
 void lv_example_msgbox_1(void);
+void lv_example_msgbox_2(void);
 
 void lv_example_obj_1(void);
 void lv_example_obj_2(void);
+void lv_example_obj_3(void);
 
 void lv_example_roller_1(void);
 void lv_example_roller_2(void);
-//void lv_example_roller_3(void);
+void lv_example_roller_3(void);
 
 void lv_example_scale_1(void);
 void lv_example_scale_2(void);
@@ -118,6 +127,9 @@ void lv_example_scale_3(void);
 void lv_example_scale_4(void);
 void lv_example_scale_5(void);
 void lv_example_scale_6(void);
+void lv_example_scale_7(void);
+void lv_example_scale_8(void);
+void lv_example_scale_9(void);
 
 void lv_example_slider_1(void);
 void lv_example_slider_2(void);
@@ -131,6 +143,7 @@ void lv_example_spinbox_1(void);
 void lv_example_spinner_1(void);
 
 void lv_example_switch_1(void);
+void lv_example_switch_2(void);
 
 void lv_example_table_1(void);
 void lv_example_table_2(void);

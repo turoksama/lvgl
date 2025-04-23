@@ -1,5 +1,6 @@
 #if LV_BUILD_TEST
 #include "../lvgl.h"
+#include "../../lvgl_private.h"
 
 #include "unity/unity.h"
 
@@ -37,7 +38,9 @@ void test_tiny_ttf_rendering_test(void)
                       "Accents: ÁÉÍÓÖŐÜŰ áéíóöőüű");
     lv_obj_center(label);
 
+#ifndef NON_AMD64_BUILD
     TEST_ASSERT_EQUAL_SCREENSHOT("libs/tiny_ttf_1.png");
+#endif
 
     lv_obj_delete(label);
     lv_tiny_ttf_destroy(font);

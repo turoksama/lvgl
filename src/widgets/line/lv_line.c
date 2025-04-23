@@ -6,7 +6,9 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_line.h"
+#include "lv_line_private.h"
+#include "../../core/lv_obj_class_private.h"
+
 
 #if LV_USE_LINE != 0
 #include "../../misc/lv_assert.h"
@@ -40,7 +42,7 @@ const lv_obj_class_t lv_line_class = {
     .height_def = LV_SIZE_CONTENT,
     .instance_size = sizeof(lv_line_t),
     .base_class = &lv_obj_class,
-    .name = "line",
+    .name = "lv_line",
 };
 
 /**********************
@@ -234,6 +236,7 @@ static void lv_line_event(const lv_obj_class_t * class_p, lv_event_t * e)
 
         lv_draw_line_dsc_t line_dsc;
         lv_draw_line_dsc_init(&line_dsc);
+        line_dsc.base.layer = layer;
         lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &line_dsc);
 
         /*Read all points and draw the lines*/

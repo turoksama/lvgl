@@ -1,16 +1,21 @@
-﻿/**
+/**
  * @file lv_canvas.c
  *
+ */
+
+/**
+ * Modified by NXP in 2024
  */
 
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_canvas.h"
+#include "lv_canvas_private.h"
+#include "../../core/lv_obj_class_private.h"
 #if LV_USE_CANVAS != 0
 #include "../../misc/lv_assert.h"
 #include "../../misc/lv_math.h"
-#include "../../draw/lv_draw.h"
+#include "../../draw/lv_draw_private.h"
 #include "../../core/lv_refr.h"
 #include "../../display/lv_display.h"
 #include "../../draw/sw/lv_draw_sw.h"
@@ -40,7 +45,7 @@ const lv_obj_class_t lv_canvas_class = {
     .destructor_cb = lv_canvas_destructor,
     .instance_size = sizeof(lv_canvas_t),
     .base_class = &lv_image_class,
-    .name = "canvas",
+    .name = "lv_canvas",
 };
 
 /**********************
@@ -107,20 +112,33 @@ void lv_canvas_set_px(lv_obj_t * obj, int32_t x, int32_t y, lv_color_t color, lv
     lv_draw_buf_t * draw_buf = canvas->draw_buf;
 
     lv_color_format_t cf = draw_buf->header.cf;
-    uint32_t stride = draw_buf->header.stride;
     uint8_t * data = lv_draw_buf_goto_xy(draw_buf, x, y);
 
     if(LV_COLOR_FORMAT_IS_INDEXED(cf)) {
-        /*Indexed image bpp could be less than 8, calculate again*/
-        uint8_t * buf = (uint8_t *)canvas->draw_buf->data;
-        buf += 8;
-        buf += y * stride;
-        buf += x >> 3;
-        uint32_t bit = 7 - (x & 0x7);
-        uint32_t c_int = color.blue;
+        uint8_t shift;
+        uint8_t c_int = color.blue;
+        switch(cf) {
+            case LV_COLOR_FORMAT_I1:
+                shift = 7 - (x & 0x7);
+                break;
+            case LV_COLOR_FORMAT_I2:
+                shift = 6 - 2 * (x & 0x3);
+                break;
+            case LV_COLOR_FORMAT_I4:
+                shift = 4 - 4 * (x & 0x1);
+                break;
+            case LV_COLOR_FORMAT_I8:
+                /*Indexed8 format is a easy case, process and return.*/
+                shift = 0;
+                *data = c_int;
+            default:
+                return;
+        }
 
-        *buf &= ~(1 << bit);
-        *buf |= c_int << bit;
+        uint8_t bpp = lv_color_format_get_bpp(cf);
+        uint8_t mask = (1 << bpp) - 1;
+        c_int &= mask;
+        *data = (*data & ~(mask << shift)) | (c_int << shift);
     }
     else if(cf == LV_COLOR_FORMAT_L8) {
         *data = lv_color_luminance(color);
@@ -354,27 +372,41 @@ void lv_canvas_init_layer(lv_obj_t * obj, lv_layer_t * layer)
 {
     LV_ASSERT_NULL(obj);
     LV_ASSERT_NULL(layer);
+    lv_layer_init(layer);
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
     if(canvas->draw_buf == NULL) return;
 
     lv_image_header_t * header = &canvas->draw_buf->header;
     lv_area_t canvas_area = {0, 0, header->w - 1,  header->h - 1};
-    lv_memzero(layer, sizeof(*layer));
 
     layer->draw_buf = canvas->draw_buf;
     layer->color_format = header->cf;
     layer->buf_area = canvas_area;
     layer->_clip_area = canvas_area;
+    layer->phy_clip_area = canvas_area;
 }
 
 void lv_canvas_finish_layer(lv_obj_t * canvas, lv_layer_t * layer)
 {
     if(layer->draw_task_head == NULL) return;
+
+    bool task_dispatched;
+
     while(layer->draw_task_head) {
         lv_draw_dispatch_wait_for_request();
-        lv_draw_dispatch_layer(lv_obj_get_display(canvas), layer);
+        task_dispatched = lv_draw_dispatch_layer(lv_obj_get_display(canvas), layer);
+
+        if(!task_dispatched) {
+            lv_draw_wait_for_finish();
+            lv_draw_dispatch_request();
+        }
     }
     lv_obj_invalidate(canvas);
+}
+
+uint32_t lv_canvas_buf_size(int32_t w, int32_t h, uint8_t bpp, uint8_t stride)
+{
+    return (uint32_t)LV_CANVAS_BUF_SIZE(w, h, bpp, stride);
 }
 
 /**********************

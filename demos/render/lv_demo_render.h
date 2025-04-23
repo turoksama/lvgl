@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file lv_demo_render.h
  *
  */
@@ -43,7 +43,12 @@ typedef enum {
     LV_DEMO_RENDER_SCENE_TRIANGLE,
     LV_DEMO_RENDER_SCENE_LAYER_NORMAL,
     LV_DEMO_RENDER_SCENE_BLEND_MODE,
-    _LV_DEMO_RENDER_SCENE_NUM,
+#if LV_USE_DRAW_SW_COMPLEX_GRADIENTS
+    LV_DEMO_RENDER_SCENE_LINEAR_GRADIENT,
+    LV_DEMO_RENDER_SCENE_RADIAL_GRADIENT,
+    LV_DEMO_RENDER_SCENE_CONICAL_GRADIENT,
+#endif
+    LV_DEMO_RENDER_SCENE_NUM,
 } lv_demo_render_scene_t;
 
 /**********************

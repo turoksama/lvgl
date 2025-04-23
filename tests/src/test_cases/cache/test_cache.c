@@ -1,7 +1,8 @@
 #if LV_BUILD_TEST
 
 #include "../lvgl.h"
-#include "lv_test_helpers.h"
+#include "../../lvgl_private.h"
+
 
 #include "unity/unity.h"
 
